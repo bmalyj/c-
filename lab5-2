@@ -1,0 +1,109 @@
+#include <iostream>
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
+template<typename T>
+class ThreadSafeQueue {
+private:
+    std::queue<T> queue;              // Очередь для хранения данных
+    std::mutex mutex;                 // Мьютекс для защиты очереди
+    std::condition_variable cond;     // Условная переменная для ожидания
+    bool shutdown_flag = false;       // Флаг завершения работы
+
+public:
+    void push(T value) {
+        // TODO: Реализовать потокобезопасное добавление
+
+        {
+            // Блокируем мьютекс перед изменением очереди
+            std::lock_guard<std::mutex> lock(mutex);
+            queue.push(value);
+        }
+
+        // Уведомляем один ожидающий поток-потребитель
+        cond.notify_one();
+    }
+
+    bool pop(T& value) {
+        // TODO: Реализовать потокобезопасное извлечение
+        // Возвращать false если очередь закрыта и пуста
+
+        std::unique_lock<std::mutex> lock(mutex);
+
+        // Ждем, пока в очереди появятся данные или очередь будет закрыта
+        cond.wait(lock, [&]() {
+            return !queue.empty() || shutdown_flag;
+        });
+
+        // Если очередь пуста и установлен флаг завершения — выходим
+        if (queue.empty() && shutdown_flag) {
+            return false;
+        }
+
+        // Извлекаем элемент из очереди
+        value = queue.front();
+        queue.pop();
+        return true;
+    }
+
+    void shutdown() {
+        // TODO: Реализовать корректное закрытие очереди
+
+        {
+            // Устанавливаем флаг завершения под защитой мьютекса
+            std::lock_guard<std::mutex> lock(mutex);
+            shutdown_flag = true;
+        }
+
+        // Уведомляем все ожидающие потоки
+        cond.notify_all();
+    }
+};
+
+void producer(ThreadSafeQueue<int>& queue, int count) {
+    // TODO: Генерировать числа и помещать в очередь
+
+    for (int i = 1; i <= count; ++i) {
+        queue.push(i); // Генерация простых чисел (1, 2, 3, ...)
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    // После генерации всех данных закрываем очередь
+    queue.shutdown();
+}
+
+void consumer(ThreadSafeQueue<int>& queue, int id) {
+    // TODO: Извлекать и обрабатывать числа из очереди
+
+    int value;
+    while (queue.pop(value)) {
+        // Имитация обработки данных
+        std::cout << "Потребитель " << id
+                  << " обработал значение: " << value << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    // Корректное завершение потока-потребителя
+    std::cout << "Потребитель " << id << " завершил работу\n";
+}
+
+int main() {
+    ThreadSafeQueue<int> queue;
+    // Один поток-производитель
+    std::thread prod(producer, std::ref(queue), 20);
+    // Три потока-потребителя
+    std::thread cons1(consumer, std::ref(queue), 1);
+    std::thread cons2(consumer, std::ref(queue), 2);
+    std::thread cons3(consumer, std::ref(queue), 3);
+
+    // Ожидание завершения всех потоков
+    prod.join();
+    cons1.join();
+    cons2.join();
+    cons3.join();
+
+    std::cout << "Все потоки корректно завершены\n";
+    return 0;
+}
