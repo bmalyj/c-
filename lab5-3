@@ -1,0 +1,128 @@
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <algorithm>
+#include <random>
+
+class ImageProcessor {
+private:
+    std::vector<std::vector<int>> image;      // Исходное изображение
+    std::vector<std::vector<int>> result;     // Результат фильтрации
+    int width, height;
+
+public:
+    ImageProcessor(int w, int h) : width(w), height(h) {
+        // TODO: Инициализировать "изображение" случайными значениями
+
+        image.resize(height, std::vector<int>(width));
+        result.resize(height, std::vector<int>(width));
+
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dist(0, 255); // яркость пикселя
+
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                image[y][x] = dist(gen);
+            }
+        }
+    }
+
+    // Однопоточное применение фильтра
+    void applyFilterSingleThread() {
+        // TODO: Реализовать последовательное применение фильтра
+
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                result[y][x] = blurPixel(x, y);
+            }
+        }
+    }
+
+    // Многопоточное применение фильтра
+    void applyFilterMultiThread(int num_threads) {
+        // TODO: Разделить изображение на части,
+        // создать потоки для обработки каждой части
+
+        std::vector<std::thread> threads;
+        int rows_per_thread = height / num_threads;
+
+        auto worker = [&](int start_y, int end_y) {
+            for (int y = start_y; y < end_y; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    result[y][x] = blurPixel(x, y);
+                }
+            }
+        };
+
+        for (int i = 0; i < num_threads; ++i) {
+            int start = i * rows_per_thread;
+            int end = (i == num_threads - 1)
+                        ? height
+                        : start + rows_per_thread;
+
+            threads.emplace_back(worker, start, end);
+        }
+
+        for (auto& t : threads) {
+            t.join();
+        }
+    }
+
+    // Фильтр размытия (усреднение 3x3)
+    int blurPixel(int x, int y) {
+        // TODO: Реализовать фильтр усреднения
+
+        int sum = 0;
+        int count = 0;
+
+        // Проходим по соседним пикселям
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                int nx = x + dx;
+                int ny = y + dy;
+
+                // Проверка границ изображения
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    sum += image[ny][nx];
+                    count++;
+                }
+            }
+        }
+
+        return sum / count; // среднее значение
+    }
+
+    //статистикf
+    void printStats() {
+        int min_val = 255;
+        int max_val = 0;
+        long long sum = 0;
+
+        for (auto& row : result) {
+            for (int v : row) {
+                min_val = std::min(min_val, v);
+                max_val = std::max(max_val, v);
+                sum += v;
+            }
+        }
+
+        std::cout << "Минимум: " << min_val << std::endl;
+        std::cout << "Максимум: " << max_val << std::endl;
+        std::cout << "Среднее: " << sum / (width * height) << std::endl;
+    }
+};
+
+int main() {
+    ImageProcessor img(800, 600);
+
+    img.applyFilterSingleThread();
+    std::cout << "Однопоточная обработка:\n";
+    img.printStats();
+
+    img.applyFilterMultiThread(4);
+    std::cout << "\nМногопоточная обработка (4 потока):\n";
+    img.printStats();
+
+    return 0;
+}
