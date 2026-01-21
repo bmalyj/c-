@@ -1,0 +1,176 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+template <typename T>
+class Stack
+{
+private:
+    vector<T> elements; // TODO: оставить
+    int capacity;       // TODO: оставить
+public:
+    Stack(int size = 10) : capacity(size) {}
+
+    // TODO: Реализовать методы:
+    // - void push(const T& element)
+    void push(const T& element) {
+        if (isFull()) {
+            // TODO: обработка переполнения
+            cout << "Stack overflow, cannot push element\n";
+            return;
+        }
+        elements.push_back(element);
+    }
+
+    // - T pop()
+    T pop() {
+        if (isEmpty()) {
+            // TODO: обработка пустого стека
+            throw runtime_error("Stack is empty, cannot pop");
+        }
+        T value = elements.back();
+        elements.pop_back();
+        return value;
+    }
+
+    // - T top() const
+    T top() const {
+        if (isEmpty()) {
+            // TODO: обработка пустого стека
+            throw runtime_error("Stack is empty, no top element");
+        }
+        return elements.back();
+    }
+
+    // - bool isEmpty() const
+    bool isEmpty() const {
+        return elements.empty();
+    }
+
+    // - bool isFull() const
+    bool isFull() const {
+        return static_cast<int>(elements.size()) >= capacity;
+    }
+
+    // - int size() const
+    int size() const {
+        return static_cast<int>(elements.size());
+    }
+
+    void display() const
+    {
+        cout << "Стек: ";
+        for (const auto& elem : elements) {
+            cout << elem << " ";
+        }
+        cout << endl;
+    }
+};
+
+template <typename T>
+class Queue
+{
+private:
+    vector<T> elements; // TODO: оставить
+    int capacity;       // TODO: оставить
+public:
+    Queue(int size = 10) : capacity(size) {}
+
+    // TODO: Реализовать методы:
+    // - void enqueue(const T& element)
+    void enqueue(const T& element) {
+        if (isFull()) {
+            // TODO: обработка переполнения
+            cout << "Queue overflow, cannot enqueue element\n";
+            return;
+        }
+        elements.push_back(element);
+    }
+
+    // - T dequeue()
+    T dequeue() {
+        if (isEmpty()) {
+            // TODO: обработка пустой очереди
+            throw runtime_error("Queue is empty, cannot dequeue");
+        }
+        T value = elements.front();
+        elements.erase(elements.begin());
+        return value;
+    }
+
+    // - T front() const
+    T front() const {
+        if (isEmpty()) {
+            // TODO: обработка пустой очереди
+            throw runtime_error("Queue is empty, no front element");
+        }
+        return elements.front();
+    }
+
+    // - bool isEmpty() const
+    bool isEmpty() const {
+        return elements.empty();
+    }
+
+    // - bool isFull() const
+    bool isFull() const {
+        return static_cast<int>(elements.size()) >= capacity;
+    }
+
+    // - int size() const
+    int size() const {
+        return static_cast<int>(elements.size());
+    }
+};
+
+int main()
+{
+    setlocale(LC_ALL, "Russian");
+    // TODO: Протестировать Stack и Queue с разными типами данных:
+    // - int
+    Stack<int> intStack(5);
+    intStack.push(1);
+    intStack.push(2);
+    intStack.push(3);
+    intStack.display();
+    cout << "intStack top: " << intStack.top() << endl;
+    cout << "intStack pop: " << intStack.pop() << endl;
+    intStack.display();
+
+    // - double
+    Stack<double> doubleStack(3);
+    doubleStack.push(1.5);
+    doubleStack.push(2.7);
+    doubleStack.display();
+
+    // - string
+    Stack<string> stringStack(4);
+    stringStack.push("hello");
+    stringStack.push("world");
+    stringStack.display();
+
+    // Queue<int>
+    Queue<int> intQueue(5);
+    intQueue.enqueue(10);
+    intQueue.enqueue(20);
+    intQueue.enqueue(30);
+    cout << "intQueue front: " << intQueue.front() << endl;
+    cout << "intQueue dequeue: " << intQueue.dequeue() << endl;
+    cout << "intQueue front after dequeue: " << intQueue.front() << endl;
+
+    // Queue<double>
+    Queue<double> doubleQueue(3);
+    doubleQueue.enqueue(3.14);
+    doubleQueue.enqueue(2.71);
+    cout << "doubleQueue front: " << doubleQueue.front() << endl;
+
+    // Queue<string>
+    Queue<string> stringQueue(4);
+    stringQueue.enqueue("foo");
+    stringQueue.enqueue("bar");
+    cout << "stringQueue front: " << stringQueue.front() << endl;
+
+    return 0;
+}
