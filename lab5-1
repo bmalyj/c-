@@ -1,0 +1,113 @@
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <mutex>
+#include <chrono>
+#include <random>
+
+class VectorSumCalculator {
+private:
+    std::vector<int> data;     // Вектор с исходными данными
+    std::mutex sum_mutex;      // Мьютекс для защиты общей суммы
+
+public:
+
+    VectorSumCalculator(size_t size) {
+        data.reserve(size);
+        // TODO: Заполнить вектор случайными числами
+        // Генератор случайных чисел
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dist(1, 100);
+        // Заполнение вектора
+        for (size_t i = 0; i < size; ++i) {
+            data.push_back(dist(gen));
+        }
+    }
+
+    // Однопоточное вычисление суммы элементов вектора
+    long long calculateSingleThreaded() {
+        // TODO: Реализовать однопоточное вычисление
+        long long sum = 0;
+        // Последовательный обход всех элементов
+        for (int value : data) {
+            sum += value;
+        }
+        return sum;
+    }
+
+    // Многопоточное вычисление суммы элементов вектора
+    // num_threads — количество потоков (по условию 4)
+    long long calculateMultiThreaded(int num_threads) {
+        // TODO: Реализовать многопоточное вычисление
+        long long total_sum = 0;               // Общая сумма
+        std::vector<std::thread> threads;      // Контейнер потоков
+
+        // Размер части вектора для одного потока
+        size_t chunk_size = data.size() / num_threads;
+
+        // Функция, которую выполняет каждый поток
+        auto worker = [&](size_t start, size_t end) {
+            long long local_sum = 0;
+
+            // Считаем сумму на своем участке
+            for (size_t i = start; i < end; ++i) {
+                local_sum += data[i];
+            }
+
+            // Критическая секция — добавляем локальную сумму к общей
+            std::lock_guard<std::mutex> lock(sum_mutex);
+            total_sum += local_sum;
+        };
+
+        // Создание потоков
+        for (int i = 0; i < num_threads; ++i) {
+            size_t start = i * chunk_size;
+            size_t end = (i == num_threads - 1)
+                             ? data.size()          // последний поток берет остаток
+                             : start + chunk_size;
+
+            threads.emplace_back(worker, start, end);
+        }
+
+        // Ожидание завершения всех потоков
+        for (auto& t : threads) {
+            t.join();
+        }
+
+        return total_sum;
+    }
+};
+
+int main() {
+// TODO: Создать объект, выполнить оба расчета
+    const size_t vector_size = 10'000'000; // Размер вектора
+    const int num_threads = 4;              // Количество потоков
+
+    // Создание объекта калькулятора
+    VectorSumCalculator calculator(vector_size);
+
+    // Замер времени однопоточного вычисления
+    auto start_single = std::chrono::high_resolution_clock::now();
+    long long single_sum = calculator.calculateSingleThreaded();
+    auto end_single = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> single_time = end_single - start_single;
+
+    // Замер времени многопоточного вычисления
+    auto start_multi = std::chrono::high_resolution_clock::now();
+    long long multi_sum = calculator.calculateMultiThreaded(num_threads);
+    auto end_multi = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> multi_time = end_multi - start_multi;
+
+    // Вывод результатов
+    std::cout << "Однопоточная сумма: " << single_sum << std::endl;
+    std::cout << "Время (1 поток): " << single_time.count() << " сек\n\n";
+
+    std::cout << "Многопоточная сумма: " << multi_sum << std::endl;
+    std::cout << "Время (" << num_threads << " потока): "
+              << multi_time.count() << " сек\n";
+
+    return 0;
+}
