@@ -1,0 +1,109 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+class Person {
+protected:
+    string name;
+    int age;
+
+public:
+    Person(string n, int a) : name(n), age(a) {}
+
+    virtual void display() const {
+        cout << "Имя: " << name << ", Возраст: " << age << endl;
+    }
+};
+
+class Employee {
+protected:
+    string position;
+    double salary;
+
+public:
+    Employee(string pos, double sal) : position(pos), salary(sal) {}
+
+    virtual void work() const {
+        cout << "Выполняет работу как сотрудник" << endl;
+    }
+};
+
+// TODO: Создать класс Teacher, наследующий от Person и Employee
+class Teacher : public Person, public Employee {
+protected:
+    string subject;
+    int experienceYears;
+
+public:
+    // TODO: Создать конструктор
+    Teacher(string n, int a, string pos, double sal, string subj, int exp)
+        : Person(n, a), Employee(pos, sal), subject(subj), experienceYears(exp) {
+    }
+
+    // TODO: Переопределить методы display() и work()
+    void display() const override {
+        cout << "Преподаватель: " << name << ", Возраст: " << age<< ", Должность: " << position << ", Предмет: " << subject << endl;
+    }
+
+    void work() const override {
+        cout << "Преподает предмет: " << subject << endl;
+    }
+
+    // TODO: Добавить специфичные методы для Teacher
+    void teach() const {
+        cout << "Стаж работы: " << experienceYears << " лет" << endl;
+    }
+};
+
+class Researcher {
+protected:
+    string researchArea;
+    int publicationsCount;
+
+public:
+    Researcher(string area, int publications)
+        : researchArea(area), publicationsCount(publications) {
+    }
+
+    void conductResearch() const {
+        cout << "Проводит исследования в области: " << researchArea << endl;
+    }
+};
+
+// TODO: Создать класс Professor, наследующий от Teacher и Researcher
+class Professor : public Teacher, public Researcher {
+public:
+    // TODO: Создать конструктор
+    Professor(string n, int a, string pos, double sal, string subj, int exp, string area, int pub)
+        : Teacher(n, a, pos, sal, subj, exp), Researcher(area, pub) {
+    }
+
+    // TODO: Переопределить необходимые методы
+    void display() const override {
+        cout << "Профессор: " << name << ", Стаж: " << experienceYears << ", Публикации: " << publicationsCount << endl;
+    }
+
+    void work() const override {
+        cout << "Преподает и проводит исследования" << endl;
+    }
+};
+
+int main() {
+    setlocale(LC_ALL, "Russian");
+    // TODO: Создать объекты Teacher и Professor
+    Teacher teacher("Иван Иванов", 35, "Учитель", 50000, "Математика", 10);
+    Professor prof("Малый Богдан", 50, "Профессор", 100000, "Физика", 20, "Квантовая физика", 25);
+
+    cout << "Teacher" << endl;
+    teacher.display();
+    teacher.work();
+    teacher.teach();
+
+    cout << "Professor" << endl;
+    prof.display();
+    prof.work();
+    prof.conductResearch();
+
+    return 0;
+}
